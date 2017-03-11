@@ -5,6 +5,7 @@ package conway
 
 import (
 	"fmt"
+	"io"
 	"os"
 )
 
@@ -25,17 +26,17 @@ func (c Cell) Neighbors() []Cell {
 }
 
 func (c Cell) ToString() string {
-	return fmt.Sprintf("( %v %v )", c.x, c.y)
+	return fmt.Sprintf("( %v %v )\n", c.x, c.y)
 }
 
-func NewCell(s string) (*Cell, error) {
+func ReadCell(r io.Reader) (*Cell, error) {
 	var x, y int64
-	n, err := fmt.Sscanf(s, "( %v %v )", &x, &y)
+	n, err := fmt.Fscanf(r, "( %d %d )\n", &x, &y)
 	if err != nil {
 		return nil, err
 	}
 	if n != 2 {
-		return nil, fmt.Errorf("Wrong string format: %s", s)
+		return nil, fmt.Errorf("Wrong string format")
 	}
 	c := Cell{x, y}
 	return &c, nil
@@ -85,11 +86,32 @@ func (p *Population) SaveToFile(fname string) error {
 	if err != nil {
 		return err
 	}
-	defer func() { f.Close() }()
+	defer f.Close()
 
 	for cell := range p.cells {
 		s := cell.ToString()
-		fmt.Fprintf(f, "%s\n", s)
+		f.WriteString(s)
 	}
 	return nil
+}
+
+func NewPopulation(fname string) (*Population, error) {
+	f, err := os.Open(fname)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+
+	p := Population{}
+	for {
+		c, err := ReadCell(f)
+		if err != nil {
+			if err != io.EOF {
+				return nil, err
+			}
+			break
+		}
+		p.cells[*c] = 0
+	}
+	return &p, nil
 }
