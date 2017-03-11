@@ -40,7 +40,9 @@ func Example_blinker() {
 	},
 		popNumber: 0,
 	}
+	p.SaveToFile("blinker0.log")
 	p.Next()
+	p.SaveToFile("blinker1.log")
 	fmt.Println(len(p.cells))
 	// Output: 3
 }

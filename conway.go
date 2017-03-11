@@ -3,6 +3,11 @@
 // conway project conway.go
 package conway
 
+import (
+	"fmt"
+	"os"
+)
+
 type Cell struct {
 	x, y int64
 }
@@ -17,6 +22,23 @@ func (c Cell) Neighbors() []Cell {
 		Cell{c.x - 1, c.y - 1}, Cell{c.x - 1, c.y}, Cell{c.x - 1, c.y + 1},
 		Cell{c.x, c.y - 1}, Cell{c.x, c.y + 1},
 		Cell{c.x + 1, c.y - 1}, Cell{c.x + 1, c.y}, Cell{c.x + 1, c.y + 1}}
+}
+
+func (c Cell) ToString() string {
+	return fmt.Sprintf("( %v %v )", c.x, c.y)
+}
+
+func NewCell(s string) (*Cell, error) {
+	var x, y int64
+	n, err := fmt.Sscanf(s, "( %v %v )", &x, &y)
+	if err != nil {
+		return nil, err
+	}
+	if n != 2 {
+		return nil, fmt.Errorf("Wrong string format: %s", s)
+	}
+	c := Cell{x, y}
+	return &c, nil
 }
 
 func (p *Population) Next() {
@@ -56,4 +78,18 @@ func (p *Population) Next() {
 
 	p.cells = np
 	p.popNumber++
+}
+
+func (p *Population) SaveToFile(fname string) error {
+	f, err := os.Create(fname)
+	if err != nil {
+		return err
+	}
+	defer func() { f.Close() }()
+
+	for cell := range p.cells {
+		s := cell.ToString()
+		fmt.Fprintf(f, "%s\n", s)
+	}
+	return nil
 }
